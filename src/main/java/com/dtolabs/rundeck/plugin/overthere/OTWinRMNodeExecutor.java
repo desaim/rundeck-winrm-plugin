@@ -673,6 +673,8 @@ public class OTWinRMNodeExecutor implements NodeExecutor, Describable {
 
 	    if (isInternal) {
 		options.set(CifsConnectionBuilder.CONNECTION_TYPE, CifsConnectionType.WINRM_INTERNAL);
+	    } else {
+		options.set(CifsConnectionBuilder.CONNECTION_TYPE, CifsConnectionType.WINRM_NATIVE);
 	    }
 	    
             options.set(ADDRESS, getHostname());
@@ -681,7 +683,6 @@ public class OTWinRMNodeExecutor implements NodeExecutor, Describable {
             options.set(OPERATING_SYSTEM, WINDOWS);
             options.set(CONNECTION_TIMEOUT_MILLIS, getConnectionTimeout());
             options.set(PORT, getPort(isHttps ? DEFAULT_HTTPS_PORT : DEFAULT_HTTP_PORT));
-            options.set(CifsConnectionBuilder.CONNECTION_TYPE, CifsConnectionType.WINRM_NATIVE);
             options.set(CifsConnectionBuilder.WINRM_ENABLE_HTTPS, isHttps);
             options.set(CifsConnectionBuilder.WINRM_KERBEROS_ADD_PORT_TO_SPN, isWinrmSpnAddPort());
             options.set(CifsConnectionBuilder.WINRM_KERBEROS_USE_HTTP_SPN, isWinrmSpnUseHttp());
