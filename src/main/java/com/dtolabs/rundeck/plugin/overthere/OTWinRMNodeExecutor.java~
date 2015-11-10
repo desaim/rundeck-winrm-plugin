@@ -78,9 +78,7 @@ public class OTWinRMNodeExecutor implements NodeExecutor, Describable {
     public static final String WINRM_SPN_USE_HTTP = "winrm-spn-use-http";
     public static final String WINRM_LOCALE = "winrm-locale";
     public static final String WINRM_TIMEOUT = "winrm-timeout";
-    public static final String WINRM_MODE = "winrm-mode";
-    public static final String WINRM_MODE_NATIVE = "native";
-    public static final String WINRM_MODE_INTERNAL = "internal";
+    
 
     public static final String WINRM_IS_DOMAIN_MEMBER = "winrm-is-domain-member";
     public static final String WINRM_DOMAIN = "winrm-domain";
@@ -99,7 +97,6 @@ public class OTWinRMNodeExecutor implements NodeExecutor, Describable {
     public static final String DEBUG_KERBEROS_AUTH = "winrm-kerberos-debug";
     public static final Boolean DEFAULT_DEBUG_KERBEROS_AUTH = false;
     public static final String DEFAULT_WINRM_PROTOCOL = WINRM_PROTOCOL_HTTPS;
-    public static final String DEFAULT_WINRM_MODE = WINRM_MODE_INTERNAL;
     public static final String KERBEROS_CACHE = "kerberos-cache";
     public static final Boolean DEFAULT_KERBEROS_CACHE = false;
 
@@ -119,7 +116,6 @@ public class OTWinRMNodeExecutor implements NodeExecutor, Describable {
     public static final String CONFIG_WINRM_TIMEOUT = "winrmTimeout";
     private static final String CONFIG_TIMEOUT = "timeout";
     private static final String CONFIG_PASSWORD_STORAGE_PATH = "passwordStoragePath";
-    private static final String CONFIG_WINRM_MODE = "winrmMode";
 
     private Framework framework;
     private static final String PROJ_PROP_PREFIX = "project.";
@@ -172,10 +168,6 @@ public class OTWinRMNodeExecutor implements NodeExecutor, Describable {
 
             .property(PropertyUtil.longProp(CONFIG_TIMEOUT, "Connection Timeout", "Connection timeout, " +
                     "in milliseconds. Default: 15000 (15 seconds).", false, null))
-
-	    .property(PropertyUtil.select(CONFIG_WINRM_MODE, "WinRM Mode", "Select Internal if Rundeck instance is running on non-Windows hosts. \n\n" +
-		    "Select Native if Rundeck instance is running on Windows server", true, DEFAULT_WINRM_MODE, Arrays.asList(WINRM_MODE_NATIVE, WINRM_MODE_INTERNAL)))
-
             .property(
                       PropertyBuilder.builder()
                                      .string(CONFIG_PASSWORD_STORAGE_PATH)
@@ -200,7 +192,6 @@ public class OTWinRMNodeExecutor implements NodeExecutor, Describable {
             )
             .mapping(CONFIG_AUTHENTICATION, PROJ_PROP_PREFIX + WINRM_AUTH_TYPE)
             .mapping(CONFIG_PROTOCOL, PROJ_PROP_PREFIX + WINRM_PROTOCOL)
-	    .mapping(CONFIG_WINRM_MODE, PROJ_PROP_PREFIX + WINRM_MODE)
             .mapping(CONFIG_CERT_TRUST, PROJ_PROP_PREFIX + WINRM_CERT_TRUST)
             .mapping(CONFIG_HOSTNAME_VERIFY, PROJ_PROP_PREFIX + WINRM_HOSTNAME_TRUST)
             .mapping(CONFIG_SPN_ADD_PORT, PROJ_PROP_PREFIX + WINRM_SPN_ADD_PORT)
@@ -578,16 +569,6 @@ public class OTWinRMNodeExecutor implements NodeExecutor, Describable {
             );
         }
 
-       public String getwinrmMode() {
-            return resolveProperty(
-                    WINRM_MODE,
-                    DEFAULT_WINRM_MODE,
-                    getNode(),
-                    getFrameworkProject(),
-                    getFramework()
-            );
-        }
-
         public Boolean isDebugKerberosAuth() {
             return resolveBooleanProperty(
                     DEBUG_KERBEROS_AUTH,
@@ -646,7 +627,6 @@ public class OTWinRMNodeExecutor implements NodeExecutor, Describable {
             final ConnectionOptions options = new ConnectionOptions();
             final String authType = getAuthType();
             final boolean isHttps = WINRM_PROTOCOL_HTTPS.equalsIgnoreCase(getProtocol());
-	    final boolean isInternal = WINRM_MODE_INTERNAL.equlsIgnoreCase(getwinrmMode());
 
             final boolean isKerberos = getUsername().indexOf("@") > 0 || AUTH_TYPE_KERBEROS.equals(authType);
 
@@ -671,17 +651,13 @@ public class OTWinRMNodeExecutor implements NodeExecutor, Describable {
                 options.set(CifsConnectionBuilder.WINRM_HTTPS_HOSTNAME_VERIFICATION_STRATEGY, getHostTrust());
             }
 
-	    if (isInternal) {
-		options.set(CifsConnectionBuilder.CONNECTION_TYPE, CifsConnectionType.WINRM_INTERNAL);
-	    }
-	    
             options.set(ADDRESS, getHostname());
             options.set(USERNAME, username);
             options.set(PASSWORD, password);
             options.set(OPERATING_SYSTEM, WINDOWS);
             options.set(CONNECTION_TIMEOUT_MILLIS, getConnectionTimeout());
             options.set(PORT, getPort(isHttps ? DEFAULT_HTTPS_PORT : DEFAULT_HTTP_PORT));
-            options.set(CifsConnectionBuilder.CONNECTION_TYPE, CifsConnectionType.WINRM_NATIVE);
+            options.set(CifsConnectionBuilder.CONNECTION_TYPE, CifsConnectionType.WINRM_INTERNAL);
             options.set(CifsConnectionBuilder.WINRM_ENABLE_HTTPS, isHttps);
             options.set(CifsConnectionBuilder.WINRM_KERBEROS_ADD_PORT_TO_SPN, isWinrmSpnAddPort());
             options.set(CifsConnectionBuilder.WINRM_KERBEROS_USE_HTTP_SPN, isWinrmSpnUseHttp());
